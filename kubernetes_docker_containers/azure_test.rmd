@@ -4,7 +4,7 @@ author : 'Juan Casado Ballesteros'
 -date : '20/5/2019'
 ---
 
-[//run]: # (pandoc azure_tests.rmd -o azure_tests.pdf && open azure_tests.pdf)
+[//run]: # (pandoc azure_test.rmd -o azure_test.pdf && open azure_test.pdf)
 [//resourceGroup]: # (resourceGroup="tutorialKubernetes")
 [//resourceGroupName]: # (resourceGroupName="MC_tutorialKubernetes_tutorialKubernetesCluster_eastus")
 [//clusterName]: # (clusterName="tutorialKubernetesCluster")
@@ -22,7 +22,8 @@ Para poderlo hacer deberemos primero obtener el nombre del grupo de recursos.
 Usaremos ese nombre para crear nuestra IP a la cual la deberemos nombrer también.
 
 ```
-az aks show --resource-group ${resourceGroup} --name ${clusterName} --query nodeResourceGroup -o tsv
+az aks show --resource-group ${resourceGroup} \
+--name ${clusterName} --query nodeResourceGroup -o tsv
 az network public-ip create \
 --resource-group ${resourceGroupName} \
 --name ${ipName} \
@@ -32,7 +33,8 @@ az network public-ip create \
 En el campo ipAdrees de la respuesta tendremos nuestra IP estática que podremos volver a mostrar con el siguiente comado.
 
 ```(bash)
-az network public-ip show --resource-group ${resourceGroupName} --name ${ipName} --query ipAddress --output tsv
+az network public-ip show --resource-group ${resourceGroupName} \
+--name ${ipName} --query ipAddress --output tsv
 ```
 
 ## Actualizar el manifiesto
@@ -106,7 +108,24 @@ Desde VS code debemos abrir el comand palet con Shift+Command+P y seleccionar la
 
 Ahora podremos editar nuestro código y subirlo a partir del Dockerfile así como hacer debugg sobre él.
 
-# Load Balancer Stress Test
+# Habilitar la monitorización de los contenedores creados
+
+Por defecto esta opción se encuentra desabilitada y la tendremos que habilitar manualmente.
+En caso de tener un workspace ya creado podremos añadir nuestros contenedores a él de modo que la monitorización se activará.
+
+```(bash)
+#PARA CREAR EL WORKSPACE
+az aks enable-addons -a monitoring -n ${clusterName} \
+-g ${resourceGroup}
+#PARA AÑADIR A UN WORSPACE EXISTENTE
+az aks enable-addons -a monitoring -n ${clusterName} \
+-g ${resourceGroup} --workspace-resource-id ${workspaceId}
+```
+
+Una vez realizado esto podremos ver toda la información en directo sobre el estado de nuestros contenedores y de todo el sistema al completo de kubernetes.
+Podremos configurar para recibir notificaciones en caso de fallo o se saturación de los recursos.
+
+# Test de rendimiento del balanceador de carga
 
 Intentaremos ver como responde el balanceador de carga a un aumento de peticiones que generaremos de forma artificial.
 Podremos monitorizar el estado de nuestro pod mediante los siguientes comandos.
@@ -127,13 +146,19 @@ kubectl describe service azure-vote-front
 Podremos configurar nuestros pods para que respondan a la carga de forma automática mediante.
 
 ```(bash)
-kubectl autoscale deployment ${deployment name} --cpu-percent=${autoescaleTrigger} --min=${minimumPods} --max=${maximumPods}
+#PRIMERO DEBEMOS ELIMINAR LA CONFIGURACIÓN ANTERIOR
+kubectl delete hpa azure-vote-front
+kubectl autoscale deployment ${deployment name} \
+--cpu-percent=${autoescaleTrigger} \
+--min=${minimumPods} \
+--max=${maximumPods}
 ```
 
 Adicionamente desde azure podremos configurar la cantidad de recursos que tiene cada pod.
 
 ```(bash)
-az aks scale --resource-group ${resourceGroup} --name ${clusterName} --node-count ${nodeCount}
+az aks scale --resource-group ${resourceGroup} \
+--name ${clusterName} --node-count ${nodeCount}
 ```
 
 ## Ejemplo de respuesta del load balancer
@@ -141,8 +166,10 @@ az aks scale --resource-group ${resourceGroup} --name ${clusterName} --node-coun
 Inicialmente hemos configurado nuestro load balancer mediante:
 
 ```(bash)
-az aks scale --resource-group ${resourceGroup} --name ${clusterName} --node-count 2
-kubectl autoscale deployment ${deployment name} --cpu-percent=${autoescaleTrigger} --min=2 --max=5
+az aks scale --resource-group ${resourceGroup} \
+--name ${clusterName} --node-count 2
+kubectl autoscale deployment ${deployment name} \
+--cpu-percent=4 --min=2 --max=5
 ```
 
 De modo que nuestros pod deberían ser relativamente sencillos de saturar y oscilando su número entre 2 y 5.
@@ -152,11 +179,10 @@ El test se realizará solo sobre el front end y no sobre el backend que no se re
 Para saturar las carga haremos peticiones de forma constante desde varias terminales com el objetivo de saturar al servidor.
 
 ```(bash)
-while true; do wget http://${ipAddress}; done
+while true; do curl http://${ipAddress}; done
 ```
 
 Pudimos ir viendo como al aumentar el número de peticiones aumentó también el de pods que se crearon llegando hasta tener activos cuatreo de los 5 que eran el máximo.
-Finalmente desactivamos las peticiones pues el ordenador en el que se hizo el test no podía aguantar realizar más sin llegar al máximo de pods que pudiera haber habido.
 Al desactivar la carga los pods se fueron deshabilitando progresivamente hasta volver a quedar los dos iniciales.
 
 Este ejemplo nos ha permitido observer uno de los funcionamientos clave de kubernetes, no se indica qué hacer si no los resultados que queremos obtener de modo que estos son conseguidos de forma automática a partir de realizar las acciones que sean pertinentes.

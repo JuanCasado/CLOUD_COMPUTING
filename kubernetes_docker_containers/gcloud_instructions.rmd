@@ -6,14 +6,14 @@ author : 'Juan Casado Ballesteros'
 
 [//run]: # (pandoc gcloud_instructions.rmd -o gcloud_instructions.pdf && open gcloud_instructions.pdf)
 
-#Instalación de los componetes necesarios
+# Instalación de los componetes necesarios
 
 Necesitaremos el gcloud-cli y en él tendremos que instalar kubernetes.
 Para ello es necesario tener Python2.7 y Python3
 
 ## Instalación del CLI
 
-Deberemos descargar desde la página *https://cloud.google.com/sdk/docs/quickstart-macos?hl=es* el paquete correspondiente a nuestro sistema.
+Deberemos descargar desde la página *https://cloud.google.com/sdk/docs* el paquete correspondiente a nuestro sistema.
 Posteriormente deberemos instalarlo, iniciar sesión en gcloud y reiniciar nuestra terminal.
 Finalmente iniciaremos el servicio.
 

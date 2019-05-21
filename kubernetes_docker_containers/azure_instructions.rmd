@@ -74,7 +74,8 @@ az account set --subscription "Azure for Students"
 
 ```(bash)
 az group create --name ${resourceGroup} --location eastus
-az acr create --resource-group ${resourceGroup} --name ${resource} --sku Basic
+az acr create --resource-group ${resourceGroup} \
+--name ${resource} --sku Basic
 az acr login --name ${resource}
 ```
 
@@ -203,7 +204,8 @@ kubectl scale --replicas=${REPLICAS} deployment/azure-vote-front
 Para iniciar el escalado automático debemos  comprobar que la versión de nuestro cluster sea superior o igual a 1.10
 
 ```(bash)
-az aks show --resource-group ${resourceGroup} --name ${clusterName} --query kubernetesVersion
+az aks show --resource-group ${resourceGroup} \
+--name ${clusterName} --query kubernetesVersion
 ```
 
 El escalado se realizará según el achivo .yml que confugura el cluster con resperto a los parámetros:
@@ -219,7 +221,8 @@ En este caso se indica que el escalado comenzará cuando el uso de cpu se aproxi
 Podremos configurar el rango de réplicas válido para que nuestra aplicación oscile en él.
 
 ```(bash)
-kubectl autoscale deployment azure-vote-front --cpu-percent=50 --min=3 --max=10
+kubectl autoscale deployment azure-vote-front \
+--cpu-percent=50 --min=3 --max=10
 ```
 
 ## Escalado manual de nodos
@@ -227,7 +230,8 @@ kubectl autoscale deployment azure-vote-front --cpu-percent=50 --min=3 --max=10
 Se podrá cambiar manualmente el número de nodos del cluster mediante:
 
 ```(bash)
-az aks scale --resource-group ${resourceGroup} --name ${clusterName} --node-count 3
+az aks scale --resource-group ${resourceGroup} \
+--name ${clusterName} --node-count 3
 ```
 
 # Actualizar la aplicación
@@ -244,10 +248,15 @@ docker-compose up --build -d
 docker tag azure-vote-front ${resourceLogin}/azure-vote-front:v2
 az acr login --name ${resource}
 docker push ${resourceLogin}/azure-vote-front:v2
-kubectl set image deployment azure-vote-front azure-vote-front=${resourceLogin}/azure-vote-front:v2
-kubectl autoscale deployment azure-vote-front --cpu-percent=50 --min=2 --max=5
-az aks scale --resource-group ${resourceGroup} --name ${clusterName} --node-count 2
-kubectl get service azure-vote-front
+#ACTUALIZAR EL MANIFEST CON EL NUEVO NOMBRE!!!
+kubectl set image deployment \
+azure-vote-front azure-vote-front=${resourceLogin}/azure-vote-front:v2
+#SOLO SI QUEREMOS CAMBIAR LA CONFIGURACION
+kubectl delete hpa azure-vote-front
+kubectl autoscale deployment azure-vote-front \
+--cpu-percent=50 --min=2 --max=5
+az aks scale --resource-group ${resourceGroup} \
+--name ${clusterName} --node-count 2
 ```
 
 ## Actualizar el cluster
@@ -255,9 +264,12 @@ kubectl get service azure-vote-front
 Podemos obtener las versiones disponibles del cluster, actualizarlo a una de las versiones disponibles y finalmente verficar el estado de la actualización.
 
 ```(bash)
-az aks get-upgrades --resource-group ${resourceGroup} --name ${clusterName} --output table
-az aks upgrade --resource-group ${resourceGroup} --name ${clusterName} --kubernetes-version 1.13.5
-az aks show --resource-group ${resourceGroup} --name ${clusterName} --output table
+az aks get-upgrades --resource-group ${resourceGroup} \
+--name ${clusterName} --output table
+az aks upgrade --resource-group ${resourceGroup} \
+--name ${clusterName} --kubernetes-version 1.13.5
+az aks show --resource-group ${resourceGroup} \
+--name ${clusterName} --output table
 ```
 
 # Borrar los recursos
