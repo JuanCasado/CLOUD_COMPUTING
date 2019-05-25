@@ -1,0 +1,63 @@
+---
+title : 'Tutorial azure para crear contenedores en kubernetes con docker'
+author : 'Juan Casado Ballesteros'
+-date : '20/5/2019'
+---
+
+[//run]: # (pandoc aws_instructions.rmd -o aws_instructions.pdf && open aws_instructions.pdf)
+
+# EKWS
+
+## Intalación de la CLI
+
+Debemos descargarnos la cli y después instalarla mediante pip
+
+```(bash)
+curl -O https://bootstrap.pypa.io/get-pip.py
+python3 get-pip.py --user
+pip3 install awscli --upgrade --user
+pip3 install awscli --upgrade --user
+```
+
+Deberemos añadir ahora al PATH la dirección en la que hemos instalado la aws cli para poderla usar desde cualquier parte y no solo desde la dirección en la que la instalameos.
+
+## Inicio de sesión
+
+Finalmente inciamos la sesión para lo que cecesitaremos claves y credenciales que nos debería proporcionar el aldministrador de nuestra cuenta.
+
+```(bash)
+aws configure
+```
+
+No fuimos capaces de encontrar dichas credenciales.
+Adicionalemente no fuimos capaces de acceder a los servicios de ekws para poder crear los contenedores u administrarlos desde el panel online pues esto no está disponible dese la versión para estudiantes.
+Obtuvimos un error en la cuienta el cual no pudimos revolver.
+
+# ECS
+
+Proporciona una interfaz web para controlar kubernetes a alto nivel.
+Seguimos el tutorial básico para crear nuestro servicio de kubernetes desde el que lanzar una aplicación. *https://aws.amazon.com/es/getting-started/tutorials/deploy-docker-containers/?trk=gs_card*
+
+## Configuración
+
+Eleguimos crear una aplición web.
+Seleccionamos que dicha apliación sería accesible mediante un balanceador de carga desde el puerto 80.
+De forma automática se nos generó una apliación de prueba con el balanceador de carga y una red interna para conectar back endo con front end.
+
+## Acceder a la aplicación de prueba
+
+Desde el balanceador de carga debemos de copiar la dirección del DNS y pegarla en el nagegador.
+En nuestro caso será *http://ec2co-ecsel-1g8ahrx8y5qvn-1226973202.us-east-1.elb.amazonaws.com*
+
+# Crear un contenedor docker con ECS
+
+Para implementarlo seguiremos el tutorial disponible en *https://aws.amazon.com/es/getting-started/tutorials/deploy-docker-containers/?trk=gs_card*
+Elegimos una dirección para acceder a nuestro contenedor *231994142476.dkr.ecr.us-east-1.amazonaws.com/awsdockertutorial*
+
+Allí descubrimos que esta opción también está deshabilitada para estudiantes.
+
+
+# Conclusiones
+
+Amazon aws está orientado a crear máquinas virtuales y tiene un bajo soporte para crear contenedores en él.
+La mayoría de opciones para crear contenedores están deshabilidas para las cuentas de estudiantes de modo que no se puede acceder a ellas.

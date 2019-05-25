@@ -1,0 +1,93 @@
+---
+title : 'Tutorial azure para crear contenedores en kubernetes con docker'
+author : 'Juan Casado Ballesteros'
+-date : '20/5/2019'
+---
+
+[//run]: # (pandoc gcloud_instructions.rmd -o gcloud_instructions.pdf && open gcloud_instructions.pdf)
+[//projecrtID]: # (projectID=gcloudtutorialkubernetes)
+[//clusterName]: # (clusterName=gcloud-tutorial-cluster)
+
+# Instalación de los componetes necesarios
+
+Necesitaremos el gcloud-cli y en él tendremos que instalar kubernetes.
+Para ello es necesario tener Python2.7 y Python3
+
+## Instalación del CLI
+
+Deberemos descargar desde la página *https://cloud.google.com/sdk/docs* el paquete correspondiente a nuestro sistema.
+Posteriormente deberemos instalarlo, iniciar sesión en gcloud y reiniciar nuestra terminal.
+Finalmente iniciaremos el servicio.
+
+```(bash)
+./google-cloud-sdk/install.sh
+gcloud init
+```
+
+## Instalación de kubernetes
+
+```(bash)
+gcloud components install kubectl
+```
+
+## Configuración local del proyecto
+
+Debemos indicar qué proyecto es que queremos modifiar así como establecer la zona en la que este se encuentra.
+
+```(bash)
+gcloud config set project ${projectID}
+gcloud config set compute/zone us-west1-a
+```
+
+# Creación de un cluster
+
+Un cluster se compone de un maestro y un conjunto de esclavos denominados nodos.
+Los nodos son instancias de máquina virtual que ejecutan nuestro código orquestamos y coordinados por el maestro.
+
+```(bash)
+gcloud container clusters create ${clusterName}
+```
+
+Para interactiuar con el cluster debemos obtener nuestras credenciales.
+Una vez realizado podremos configurar el cluster e interactuar con él.
+
+```(bash)
+gcloud container clusters get-credentials ${clusterName}
+```
+
+## Subir código al cluster
+
+Subiremos primero una aplicación de prueba que nos ofrece Google para comprobar que el cluster funciona de forma adecuada.
+Con ello emplazamos en nuestro cluster la imagen de prueba a la que le habilitamos el puerto 8080 para que se comunique con el exterior.
+
+```(bash)
+kubectl run hello-server --image gcr.io/google-samples/hello-app:1.0 --port 8080
+```
+
+## Crer un balanceador de carga
+
+Para que nuestra imagen pueda ser accesible desde el exterior de un modo escalable creamos un balanceador de carga que ubicamos delante del cluster.
+Los usuarios para acceder al servicio se conectarán con el balanceador de carga el cual les redireccionará a la aplicación.
+
+```(bash)
+kubectl expose deployment hello-server --type LoadBalancer \
+--port 80 --target-port 8080
+```
+
+## Monitorizar el cluster y acceder a sus servicios
+
+Podremos utilizar todas las herramientas de monitorización que proporciona kubernetes sobre el cluster creado.
+Mediante ellas podremos ver la IP de nuestra aplicación y acceder a ella mediante el navegador.
+
+```(bash)
+kubectl get service hello-server
+```
+
+## Borrar recursos
+
+Primero deberemos desenlazar kubernetes de nuestro cluster y luego borrar los recursos que se crearon en gcloud.
+
+```(bash)
+kubectl delete service hello-server
+gcloud container clusters delete ${clusterName}
+```

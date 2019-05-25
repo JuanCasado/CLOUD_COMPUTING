@@ -1,0 +1,70 @@
+---
+title : 'Tutorial azure para crear contenedores en kubernetes con docker'
+author : 'Juan Casado Ballesteros'
+-date : '20/5/2019'
+---
+
+[//run]: # (pandoc gcloud_bookshelf.rmd -o gcloud_bookshelf.pdf && open gcloud_bookshelf.pdf)
+[//projecrtID]: # (projectID=bookshelf-tutorial-container)
+[//clusterName]: # (clusterName=bookshelf-tutorial-cluster)
+[//bucketName]: # (bucketName=bookshelf-tutorial-bucket-datastor)
+
+# BookShelf
+
+Seguiremos el tutorial *https://cloud.google.com/go/docs/tutorials/bookshelf-on-kubernetes-engine*
+
+## Setup
+
+```(bash)
+gcloud config set project ${projectID}
+gcloud config set compute/zone us-central1-b
+gcloud container clusters create bookshelf \
+--scopes "cloud-platform" \
+--num-nodes 2 \
+--enable-basic-auth \
+--issue-client-certificate \
+--enable-ip-alias \
+--zone us-central1-b
+go get -u -d github.com/GoogleCloudPlatform/golang-samples/getting-started/bookshelf
+```
+
+## Creación de data store
+
+Creamos una base de datos para que contenga los datos de nuestros libros.
+Habilitamos esta característica desde la interfaz de Google Cloud
+
+```(bash)
+gsutil mb gs://${bucketName}
+gsutil defacl set public-read gs://${bucketName}
+```
+
+## Configurar la aplicación
+
+```(bash)
+cp gke_deployment/Dockerfile .
+```
+
+## Construir la aplicación
+
+```(bash)
+docker build . -t gcr.io/${projectID}/bookshelf
+gcloud docker -- push gcr.io/${projectID}/bookshelf
+kubectl create -f bookshelf-frontend.yaml
+kubectl create -f bookshelf-worker.yaml
+kubectl create -f bookshelf-service.yaml
+```
+
+## Conect to the app
+
+Necesitamos obtener la IP
+
+```(bash)
+kubectl describe service bookshelf
+```
+
+## Delete
+
+```(bash)
+gcloud container clusters delete bookshelf --zone us-central1-b
+```
+

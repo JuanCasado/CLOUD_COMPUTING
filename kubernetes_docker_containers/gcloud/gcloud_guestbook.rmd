@@ -1,0 +1,64 @@
+---
+title : 'Tutorial azure para crear contenedores en kubernetes con docker'
+author : 'Juan Casado Ballesteros'
+-date : '20/5/2019'
+---
+
+[//run]: # (pandoc gcloud_guestbook.rmd -o gcloud_guestbook.pdf && open gcloud_guestbook.pdf)
+[//projecrtID]: 2 (projectID=tutorialguestbookcontainer)
+[//clusterName]: 2 (clusterName=guestbook-tutorial-cluster)
+
+# GuestBook
+
+Seguiremos el tutorial *https://cloud.google.com/kubernetes-engine/docs/tutorials/guestbook*
+En dicho tutorial crearemos una aplicación con kubernetes implementada mediante una arquitectura de back-end y front-end en la que habrá un nodo maestro de redis y un conjunto de escalvos.
+
+## Creación del proyecto
+
+```(bash)
+gcloud config set project ${projectID}
+gcloud config set compute/zone us-central1-b
+gcloud container clusters create guestbook --num-nodes=2
+gcloud container clusters get-credentials guestbook
+```
+## Crear el nodo maestro de redis
+
+```(bash)
+kubectl create -f redis-master-deployment.yaml
+kubectl create -f redis-master-service.yaml
+```
+
+## Crear los esclavos de redis
+
+```(bash)
+kubectl create -f redis-slave-deployment.yaml
+kubectl create -f redis-slave-service.yaml
+```
+
+## Habilitar el front end
+
+```(bash)
+kubectl create -f frontend-deployment.yaml
+kubectl create -f frontend-service.yaml
+```
+
+## Activar autoescalado
+
+```(bash)
+kubectl autoscale deployment frontend \
+--cpu-percent=50 --min=1 --max=5
+```
+
+## Acceder a la aplicación
+
+```(bash)
+kubectl get service frontend
+```
+
+## Borrar recursos
+
+```(bash)
+kubectl delete service frontend
+gcloud compute forwarding-rules list
+gcloud container clusters delete guestbook
+```
